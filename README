@@ -1,0 +1,15 @@
+# quiddswic
+
+Quick and Dirty Data Science with Incanter and Clojure
+
+## Usage
+
+Copy and paste the code from quiddswic/core.clj into a repl you start
+using the project.clj. And possibly read some of the notes in
+presentation.org.
+
+## License
+
+Copyright (C) 2012 Bruce Durling
+
+Distributed under the Eclipse Public License, the same as Clojure.

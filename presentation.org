@@ -1,0 +1,176 @@
+* Practical Magic - Clojure for Data Scientists
+* Hi!
+
+  I'm Bruce Durling.
+
+  @otfrom on twitter.
+
+** Community
+
+   I help run the London Clojurians.
+
+   And help with the
+
+   - London Java Community
+   - London Python Dojo
+   - London Salesforce User Group.
+
+*** Upcoming
+
+    - EuroClojure
+      24-25 May
+      http://euroclojure.com
+      Rich Hickey and Stuart Halloway Keynotes
+
+** Work
+
+   I'm the CTO of Mastodon C.
+
+   We're going to cut global CO2 by 1% by greenifying you hadoop jobs
+   in the cloud.
+
+   mastodonc.com
+   mastodonc.blogspot.com
+   @mastodonc
+
+* I already have R/SPSS/PSSP/MatLab/Excel
+
+  - You can do most (all?) of it in clojure
+  - And you get prolog
+  - And you get hadoop w/Datalog (Cascalog)
+  - And you get Storm (realtime stats)
+  - And you get Web Apps
+  - And it is a free general purpose language
+  - Lots of developers love it
+  - But it is still beautiful and understandable
+
+* So, where should I start?
+
+** Incanter to the rescue
+
+*** What is Incanter?
+
+    http://www.incanter.org
+    http://data-sorcery.org/
+    http://github.com/liebke/incanter
+
+* Getting Started
+
+** project.clj
+
+(defproject quiddswic "0.0.3"
+    :description "Quick and Dirty Data Science with Incanter and Clojure"
+    :dependencies [[org.clojure/clojure "1.3.0"]
+                   [incanter "1.3.0"
+                    :exclusions [swank-clojure
+                                 org.clojure/clojure
+                                 org.clojure/clojure-contrib
+                                 org.clojars.bmabey/congomongo
+                                 congomongo]]
+                   [clj-time "0.3.3"
+                    :exclusions [org.clojure/clojure
+                                 org.clojure/clojure-contrib]]
+                   [congomongo "0.1.7"
+                    :exclusions [org.clojure/clojure
+                                 org.clojure/clojure-contrib]]])
+
+** What is required?
+
+(require '[clj-time.format :as tformat])
+(require '[clj-time.core :as time])
+(require '[clj-time.coerce :as coerce])
+(require '[incanter.core :as incanter])
+(require '[incanter.stats :as stats])
+(require '[incanter.charts :as charts])
+(require '[incanter.io :as io])
+(use 'clojure.repl)
+
+** How do I get data in?
+
+(def series
+  (io/read-dataset "./beer.csv" :header true))
+
+* Strings are not dates
+
+** $map and date-clj conj-cols
+
+(def dts
+  (incanter/dataset
+   [:dts]
+   (incanter/$map
+    (fn [d] (tformat/parse (:year-month-day tformat/formatters) d))
+    [:date]
+    series)))
+
+(def t
+  (incanter/dataset
+   [:millis]
+   (incanter/$map
+    (fn [d] (coerce/to-long d))
+    [:dts]
+    dts)))
+
+(def s1 (incanter/conj-cols series dts t))
+
+(incanter/head s1)
+
+(incanter/view s1)
+
+* Now what do I do with it
+
+** How about a seasonal means?
+
+(def dow (incanter/dataset [:dow] (incanter/$map (fn [d] (time/day-of-week d)) [:dts] s1)))
+
+(def s2 (incanter/conj-cols s1 dow))
+
+(def
+  sm
+  (incanter/col-names
+   (incanter/$rollup (fn [coll] (stats/mean coll)) :beer :dow s2)
+   [:season :mean]))
+
+(def sm-ord (incanter/$order :season :asc sm))
+
+(def s3 (incanter/$join [:season :dow] sm s2))
+
+(incanter/head s3)
+
+** mean
+
+(stats/mean (incanter/$ :beer s3))
+
+** sorting
+
+(def sm-ord (incanter/$order :season :asc sm))
+
+* So, I've got a lot of numbers
+
+** view
+
+(incanter/view s1)
+
+** Plotting and Graphics
+
+(def ts-plot
+  (charts/time-series-plot (incanter/$ :seconds s1) (incanter/$ :metric s1)))
+
+(incanter/view ts-plot)
+
+* The Future
+
+  - Make it faster (mostly remove reflection)
+  - Integrate with frinj
+  - Big Data (hadoop, datomic)
+
+  Help us at our monthly sprints!
+
+  Join the london-clojurians google group to find out more.
+
+* Thanks!
+
+Bruce Durling, @otfrom
+
+CTO www.mastodonc.com @MastodonC
+
+EuroClojure 24-25 May: http://euroclojure.com
