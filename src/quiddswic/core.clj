@@ -38,6 +38,8 @@
 
 (def s2 (incanter/conj-cols s1 dow))
 
+(stats/mean (incanter/$ :beer s2))
+
 (def
   sm
   (incanter/col-names
@@ -47,7 +49,7 @@
 (def sm-ord (incanter/$order :season :asc sm))
 
 (def sm-sd
-  (let [sd1 (stats/sd (incanter/$ :beer s3))
+  (let [sd1 (stats/sd (incanter/$ :beer s2))
         sd1-high (incanter/$map (fn [m] (+ sd1 m)) [:mean] sm-ord)
         sd1-low (incanter/$map (fn [m] (- m sd1)) [:mean] sm-ord)
         sd2-high (incanter/$map (fn [m] (+ (* 2 sd1) m)) [:mean] sm-ord)
@@ -56,6 +58,8 @@
         (incanter/col-names [:season :mean :sd1-high :sd1-low :sd2-high :sd2-low]))))
 
 (def s3 (incanter/$join [:season :dow] sm-sd s2))
+
+(incanter/head s3)
 
 (def s-alerts
   (-> (incanter/$map
@@ -66,10 +70,6 @@
        [:beer :sd1-high :sd1-low] s3)
       (incanter/col-names [:alert])
       (incanter/conj-cols s3)))
-
-(incanter/head s3)
-
-(stats/mean (incanter/$ :beer s3))
 
 (def april-2011
   (incanter/$where
